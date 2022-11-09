@@ -1,0 +1,16 @@
+COMANDOS PARA COMPILAR:
+
+Compilar:
+88110e.exe -e 5000 -o CDV.bin CDV.ens
+-e: En que linea está el programa principal
+-o: Output
+
+Ejecutar:
+mc88110 LongCad.bin
+
+e: ejecutar hasta break point o final programa
+q: quit
+p + 5016: Añadir break point en linea 5016
+t: Ejecucion paso a paso
+t 10: Ejecuta 10 pasos
+v 3960: Ver contenido de direcciones 3960, 3964, 3968...
