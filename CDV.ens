@@ -1,0 +1,175 @@
+;Autor: Guillermo Franco Gimeno
+;Fecha: 9/11/2022
+
+;Macros
+LEA: MACRO (reg,ETIQ)
+	 or	  reg, r0, low(ETIQ)
+	 or.u reg, reg, high(ETIQ)
+	 ENDMACRO
+
+DBNZ: MACRO (reg, ETIQ)
+		sub	reg, reg, 1
+		cmp r2, reg, r0
+		bb0 eq, r2, ETIQ
+		ENDMACRO
+
+LOAD: MACRO (reg, ETIQ)
+		LEA (reg, ETIQ)
+		ld reg,reg,r0
+		ENDMACRO
+
+PUSH: MACRO (ra)
+		subu r30, r30,4
+		st ra,r30,r0
+		ENDMACRO
+
+POP: MACRO (ra)
+		ld ra, r30, 0
+		addu r30, r30, 4
+		ENDMACRO
+;Fin Macros
+
+;Datos
+org 100
+C1:
+    data "_"; pos in cad1 = 0x12 pos cad2 = 0xd
+cad1:
+    data "VZDokbXbDvMUGAGcbG_]Nwea_xiOIAtW]fjUtpQxO^DvgbO_anBXI]tgqoEYJpyazVLXOzP_NiTrSHnC[wy`ZZRSD`iUFo^zs^lhwubzggh^UXkcORtMCSF"; long =  0x77
+from1: 
+    data 0
+to1: 
+    data 6
+cad2:
+    data "TIh`fnZngg^ni_L_kYOfoqGIU[jZHzDXIbhDy[hE`y"; long = 0x2a
+
+;Fin Datos
+
+;Programas
+org 5000
+ProgPrincipal:
+    or r30, r0, 3000;Inicializamos la pila
+
+    bsr TestLongCad
+    bsr TestBuscaCar
+    bsr TestBuscaCarHastaFinal
+
+    stop
+
+;Testers
+TestLongCad:
+    PUSH(r1);Guardamos retorno
+
+    LEA (r10, cad1)
+    PUSH (r10) 
+    bsr LongCad
+    addu r30, r30, 4;Restauramos pila
+
+    POP(r1)
+    jmp(r1);Volvemos a retorno
+
+
+
+TestBuscaCar: 
+    PUSH(r1);Guardamos dirección de retorno
+
+    LEA(r10, to1)
+    ld.bu r10, r10, 0
+    PUSH (r10);to
+
+    LEA (r10, from1)
+    ld.bu r10, r10, 0
+    PUSH (r10);from
+
+    LEA (r10, cad1)
+    PUSH (r10);*cadena
+
+    LEA(r10, C1);
+    ld.bu r10, r10, 0
+    PUSH (r10); C
+
+    bsr BuscaCar
+    addu r30, r30, 16;Volvemos al estado de pila anterior
+    
+    POP(r1);Cogemos la dirección de retorno
+    jmp(r1)
+
+TestBuscaCarHastaFinal: 
+    PUSH(r1);Guardamos dirección de retorno 
+    
+    LEA (r10, cad2)
+    PUSH (r10) 
+    bsr LongCad
+    addu r30, r30, 4;Restauramos pila
+    PUSH (r29);to = LongCad(cad1)
+
+    LEA (r10, from1)
+    ld.bu r10, r10, 0
+    PUSH (r10);from
+
+    LEA (r10, cad2)
+    PUSH (r10);*cadena
+
+    LEA(r10, C1);
+    ld.bu r10, r10, 0
+    PUSH (r10); C
+
+    bsr BuscaCar
+    addu r30, r30, 16;Volvemos al estado de pila anterior
+    
+    POP(r1);Cogemos la dirección de retorno
+    jmp(r1)
+;Fin Testers
+
+;LongCad (*cadena) -> r29 = Longitud Cadena
+LongCad:
+    PUSH(r1);Guardamos la dirección de retorno
+
+    or r29, r0, r0	;Inicializamos el contador de palabras
+    ld r10, r30, 4;Cargamos direccion de la cadena
+
+sig_carLC:
+    
+    ld.bu r4, r10, r29; Cargamos el caracter
+    cmp r7, r4, r0; Comparamos el caracter r4 con el caracter de final de linea
+    bb1 eq, r7, fin_LongCad; Saltar a fin_LongCad si ha leido el final de linea
+    ;Si no lo ha hecho
+    addu r29, r29, 1; longitud++
+    ;addu r10, r10, 1; El puntero avanza al siguiente caracter
+    br sig_carLC;
+
+fin_LongCad:
+    POP(r1)
+    jmp(r1);Volvemos a dirección de retorno
+;Fin LongCad
+
+;BuscaCar (caracter, *cadena, from, to ) -> r29 = Posicion absoluta del caracter en cadena[from, to), to si no aparece
+BuscaCar:
+    PUSH(r1); Guardamos dirección de retorno
+
+    ld.bu r20, r30, 4;Cargamos C en r20
+    ld r21, r30, 8; Cargamos ref en r21
+    ld.bu r29, r30, 12; Cargamos from en r29
+    ld.bu r23, r30, 16; Cargamos to en r23
+
+
+sig_carBC:
+    ld.bu r4, r21, r29; Cargamos el caracter desde from
+    cmp r7, r4, r20; Comparamos caracter actual con caracter buscado
+    bb1 eq, r7, fin_BuscaCar;Si caracter encontrado
+    addu r29, r29, 1;from++
+    cmp r8, r29, r23; Comparamos from y to en r8
+    bb1 eq, r8, fin_BuscaCar; Si hemos llegado al final
+    br sig_carBC; Comprobamos el siguiente caracter
+
+fin_BuscaCar:
+    POP(r1)
+    jmp(r1);Volvemos a la dirección de retorno
+;Fin BuscaCar
+
+CoincidenCad: jmp(r1)
+BuscaMax: jmp(r1)
+Comprime: jmp(r1)
+Descomprime: jmp(r1)
+Verifica: jmp (r1)
+
+
