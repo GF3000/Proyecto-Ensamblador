@@ -80,7 +80,7 @@ TestBuscaCar:
     ld.bu r10, r10, 0
     PUSH (r10);from
 
-    LEA (r10, cad1)
+    LEA (r10, cad2)
     PUSH (r10);*cadena
 
     LEA(r10, C1);
@@ -166,10 +166,33 @@ fin_BuscaCar:
     jmp(r1);Volvemos a la dirección de retorno
 ;Fin BuscaCar
 
-CoincidenCad: jmp(r1)
+;long = CoincidenCad (*cadena1, *cadena2) -> r29 = nº de caracteres que coinciden desde el primero
+CoincidenCad:
+PUSH(r1); Guardamos retorno
+
+ld r2, r30, 4; Cargamos en r2 dirección cad1
+ld r3, r30, 8; Cargamos en r3 dirección cad2
+or r29, 0, 0; r29 = index = 0
+
+sig_carCC:
+ld.bu r5, r2, r29; r5 = car cad1
+ld.bu r6, r3, r29; r6 = car cad2
+
+cmp r7, r5, r6; Comparamos car1 y car2
+bb0 eq, r7,fin_CoincidenCar;Son diferentes
+;else
+addu r29, r29, 1; index++
+br CoincidenCad
+
+fin_CoincidenCar:
+POP(r1)
+jmp(r1);Volvemos a la dirección de retorno
+;Fin CoincidenCar
+
+
+
+
 BuscaMax: jmp(r1)
 Comprime: jmp(r1)
 Descomprime: jmp(r1)
 Verifica: jmp (r1)
-
-
