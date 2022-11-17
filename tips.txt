@@ -6,7 +6,7 @@ Compilar:
 -o: Output
 
 Ejecutar:
-mc88110 LongCad.bin
+mc88110 CDV.bin
 
 e: ejecutar hasta break point o final programa
 q: quit
