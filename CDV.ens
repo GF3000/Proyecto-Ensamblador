@@ -236,27 +236,79 @@ fin_CoincidenCar:
 
 ;rv = BuscaMax( *cad, max, *dev ) -> dev = posicion en ref de la cadena con más coincidentes
 BuscaMax: 
+
     PUSH(r1); Guardamos retorno
     ld r2, r30, 4; r2 = *cad
     ld.bu r3, r30, 8; r3 = max
-    ld.bu r4, r20, 12; r4 = ¿*dev¿ -> Esta mal pasada la dev
-    add r6, r3, r2; r6 = subcadena fija
     or r7, r0, r0; r7 = coincidencia max
     or r8, r0, r0; r8 = index busca
     ld.bu r9, r2, 0; r9 = primer carecter
+
 sig_iteracion:
+
+    ;Guardamos variables locales
+    PUSH(r7)
+
     ;BuscaCar (r9, r2, r8, r3)
+    PUSH(r3)
+    PUSH(r8)
+    PUSH(r2)
+    PUSH(r9)
+    bsr BuscaCar
+    POP(r9)
+    POP(r2)
+    POP(r8)
+    POP(r3)
+
+    ;Rescatamos variables locales
+    POP(r7)
+
     ;if(r29 == r3) -> FIN
-    ;r8 = r29
+    cmp r25, r29, r3
+    bb1 eq, r25, fin_BuscaMax
+
+    or r8, r29, 0;r8 = r29
+
     ;if (r8 >= 255) -> FIN
-    ;*r10 = *r2 + r8 
-    ;CoincideCad(r6, r2)
+    cmp r25, r8, 255
+    bb1 ge, r25, fin_BuscaMax
+
+    add r10, r2, r8;*r10 = *r2 + r8 
+    add r6, r3, r2; r6 = subcadena fija
+
+    ;Guardamos variables locales
+    PUSH(r7)
+    PUSH(r3)
+    PUSH(r8)
+    PUSH(r2)
+    PUSH(r9)
+
+    ;CoincideCad(r6, r10)
+    PUSH(r10)
+    PUSH(r6)
+    bsr CoincideCad
+    add r30, r30, 8; Eliminamos argumentos de pila
+
+    ;Recogemos variables locales
+    POP(r9)
+    POP(r2)
+    POP(r8)
+    POP(r3)
+    POP(r7)
+
     ;if (!(r29 > r7)) -> +4
-    ;r7 = r9
-    ;r8++
+    cmp r25, r29, r7
+    bb1 gt, r25, +4
+    ;else
+    or r7, r29, 0;r7 = r29
+    add r8, r8, 1;r8++
 fin_BuscaMax:
+    ld.bu r4, r20, 12; r4 = *dev
     ;if (r8 == 0) -> r8 = -1
-    ;st r8, r4, 0
+    cmp r25, r8, 0
+    bb0 eq, r25, 4
+    or r8, -1,0; r8 = -1 
+    st r8, r4, 0; Guardamos r8 en *dev
 
     
 ;Fin BuscaMax
