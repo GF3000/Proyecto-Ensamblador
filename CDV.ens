@@ -286,7 +286,7 @@ sig_iteracion:
     ;CoincideCad(r6, r10)
     PUSH(r10)
     PUSH(r6)
-    bsr CoincideCad
+    bsr CoincidenCad
     add r30, r30, 8; Eliminamos argumentos de pila
 
     ;Recogemos variables locales
@@ -303,16 +303,18 @@ sig_iteracion:
     or r7, r29, 0;r7 = r29
     add r8, r8, 1;r8++
 fin_BuscaMax:
+
     ld.bu r4, r20, 12; r4 = *dev
     ;if (r8 == 0) -> r8 = -1
     cmp r25, r8, 0
     bb0 eq, r25, 4
-    or r8, -1,0; r8 = -1 
-    st r8, r4, 0; Guardamos r8 en *dev
 
+    sub r8, r8, 1;r8 = -1 
+    st r8, r4, 0; Guardamos r8 en *dev
+    POP(r1)
+    jmp(r1)
     
 ;Fin BuscaMax
-
 Comprime: jmp(r1)
 Descomprime: jmp(r1)
 Verifica: jmp (r1)
