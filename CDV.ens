@@ -43,9 +43,9 @@ cad2:
     data "121`fnZngg^ni_L_kYOfoqGIU[jZHzDXIbhDy[hE`y"; long = 0x2a
     
 cad3:
-    data "12i123cm123";  VUscaMax = 3
+    data "912i123cm123";  BUscaMax = 4
 max:
-    data 7
+    data 9
 dev:
     data 3012
 
@@ -57,10 +57,10 @@ org 5000
 ProgPrincipal:
     or r30, r0, 3000;Inicializamos la pila
 
-    bsr TestLongCad
-    bsr TestBuscaCar
-    bsr TestBuscaCarHastaFinal
-    bsr TestCoincidenCar
+    ;bsr TestLongCad
+    ;bsr TestBuscaCar
+    ;bsr TestBuscaCarHastaFinal
+    ;bsr TestCoincidenCar
     bsr TestBuscaMax
 
     stop
@@ -242,7 +242,7 @@ BuscaMax:
     ld.bu r3, r30, 8; r3 = max
     or r7, r0, r0; r7 = coincidencia max
     or r8, r0, r0; r8 = index busca
-    ld.bu r9, r2, 0; r9 = primer carecter
+    ld.bu r9, r2, r3; r9 = primer carecter
 
 sig_iteracion:
 
@@ -264,17 +264,19 @@ sig_iteracion:
     POP(r7)
 
     ;if(r29 == r3) -> FIN
+BP1:
     cmp r25, r29, r3
     bb1 eq, r25, fin_BuscaMax
 
     or r8, r29, 0;r8 = r29
 
     ;if (r8 >= 255) -> FIN
+BP2:
     cmp r25, r8, 255
     bb1 ge, r25, fin_BuscaMax
 
     add r10, r2, r8;*r10 = *r2 + r8 
-    add r6, r3, r2; r6 = subcadena fija
+    add r6, r2, r3; r6 = subcadena fija
 
     ;Guardamos variables locales
     PUSH(r7)
@@ -285,7 +287,7 @@ sig_iteracion:
 
     ;CoincideCad(r6, r10)
     PUSH(r10)
-    PUSH(r6)
+    PUSH(r6); Es posible que r6 este mal pasado
     bsr CoincidenCad
     add r30, r30, 8; Eliminamos argumentos de pila
 
@@ -297,21 +299,24 @@ sig_iteracion:
     POP(r7)
 
     ;if (!(r29 > r7)) -> +4
+BP3:
     cmp r25, r29, r7
-    bb1 gt, r25, +4
+    bb0 gt, r25, +2
     ;else
     or r7, r29, 0;r7 = r29
     add r8, r8, 1;r8++
+    br sig_iteracion
 fin_BuscaMax:
 
-    ld.bu r4, r20, 12; r4 = *dev
+    ld.bu r4, r30, 12; r4 = *dev
     ;if (r8 == 0) -> r8 = -1
     cmp r25, r8, 0
-    bb0 eq, r25, 4
-
+    bb0 eq, r25, +2
+    ;r8 != 0 -> saltar una linea
     sub r8, r8, 1;r8 = -1 
     st r8, r4, 0; Guardamos r8 en *dev
     POP(r1)
+BP4:
     jmp(r1)
     
 ;Fin BuscaMax
