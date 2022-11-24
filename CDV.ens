@@ -43,11 +43,11 @@ cad2:
     data "121`fnZngg^ni_L_kYOfoqGIU[jZHzDXIbhDy[hE`y"; long = 0x2a
     
 cad3:
-    data "912i123cm123";  BUscaMax = 4
+    data "12i123cm1235646";  BUscaMax = 4
 max:
-    data 9
+    data 8
 dev:
-    data 3012
+    data 0x12010
 
 
 ;Fin Datos
@@ -132,7 +132,7 @@ TestBuscaCarHastaFinal:
 TestCoincidenCar:
     PUSH(r1)
     
-    LEA(r2, cad2)
+    LEA(r2, cad2)   
     PUSH(r2); Pasamos cad2
 
     LEA(r2, cad1)
@@ -146,7 +146,8 @@ TestCoincidenCar:
 TestBuscaMax:
     PUSH(r1)
 
-    LEA(r2, dev)
+    LOAD(r2, dev)
+BP1:
     PUSH(r2); Pasamos *dev
 
     LOAD(r2, max)
@@ -240,6 +241,8 @@ BuscaMax:
     PUSH(r1); Guardamos retorno
     ld r2, r30, 4; r2 = *cad
     ld.bu r3, r30, 8; r3 = max
+
+    ld r4, r30, 12; r4 = *dev
     or r7, r0, r0; r7 = coincidencia max
     or r8, r0, r0; r8 = index busca
     ld.bu r9, r2, r3; r9 = primer carecter
@@ -264,7 +267,6 @@ sig_iteracion:
     POP(r7)
 
     ;if(r29 == r3) -> FIN
-BP1:
     cmp r25, r29, r3
     bb1 eq, r25, fin_BuscaMax
 
@@ -308,11 +310,7 @@ BP3:
     br sig_iteracion
 fin_BuscaMax:
 
-    ld.bu r4, r30, 12; r4 = *dev
-    ;if (r8 == 0) -> r8 = -1
-    cmp r25, r8, 0
-    bb0 eq, r25, +2
-    ;r8 != 0 -> saltar una linea
+    ld r4, r30, 12; r4 = *dev
     sub r8, r8, 1;r8 = -1 
     st r8, r4, 0; Guardamos r8 en *dev
     POP(r1)
