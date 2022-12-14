@@ -1,0 +1,69 @@
+comprime(*texto, *salida):
+    tam = LongCad(texto)
+    tamAux = tam/4
+    tamAux = tamAux *4
+    dif = tam - tamAux
+    tamRedondeado = tam + dif
+
+    textoComp = reservarEspacioEnPila(tamRedondeado)
+    punteros = reservarEspacioEnPila(punteros)
+
+    copy(8 primeros caracteres, textoComp)
+
+    punteroTexto = octavo cacrater
+    punteroSalida = salida + 5
+    punteroMapaBit = 0
+    punteroPosCadena 
+    
+    bucleTexto:
+        long = buscaMax (texto, punteroTexto, punteroPosCadena)
+        if (long <4)
+            copy(caracter[punteroTexto], textoComp)
+            //En el byte de puntero en posicion punteroMapaBit ponemos 0
+            writeBit(0, punteroMapaBit, punteroSalida)
+            punteroTexto++ //aumentamos byte texto
+            punteroMapaBit ++ //aumentamos bit MapaBit
+            if (punteroMapaBit >= 8)
+                punteroMapaBit = 0
+                punteroSalida++
+            punteroTexto++
+            textoComp++
+        else
+            copy(mem(punteroPosCadena), textoComp)
+            textoComp ++
+            copy(long, textoComp)
+            textoComp+=2
+            punteroTexto += long
+            writeBit(0, punteroMapaBit, punteroSalida)
+            punteroMapaBit ++//aumentamos bit MapaBit
+            if (punteroMapaBit >= 8)
+                punteroMapaBit = 0
+                punteroSalida++
+            punteroTexto++
+    jmp(bucleTexto)
+
+    //Vamos con la cabecera
+    copy(tam, salida)
+    salida +=2
+    copy("0x01", salida)
+    salida += 1
+    tamAux = 5 + punteroSalida
+    copy(tamAux, salida)
+    //El mapa de bit ya deberia estar en su sitio
+    
+    salida=salida + punteroSalida
+
+    //Copiamos el textoComp de la pila
+
+    contador = punteroPrimeraLetra
+    bucleCopia:
+        letra = pila[punteroPrimeraLetra]
+        copy(letra, salida)
+        salida++
+        punteroPrimeraLetra++
+        //falta condicion de salida
+    jmp(bucleCopia)       
+
+    
+                
+

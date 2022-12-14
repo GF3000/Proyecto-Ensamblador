@@ -41,15 +41,29 @@ to1:
     data 6
 cad2:
     data "121`fnZngg^ni_L_kYOfoqGIU[jZHzDXIbhDy[hE`y"; long = 0x2a
-    
-cad3:
-    data "12i123cm1235646";  BUscaMax = 4
-max:
+
+cadBuscaMax1:
+    data "a-ab-abcabcd"; dev = 5
+max1:
     data 8
+
+cadBuscaMax2:
+    data "123123"; dev = 0
+max2:
+    data 3
+cadBuscaMax3:
+    data "TresTristesTigresEnUnTrigal"; dev = 4
+max3:
+    data 21
+cadBuscaMax4: 
+    data "abcdefghijklmnopqrstuvwxyz"; dev =-1
+max4:
+    data 4
+cadCompresion1:
+    data "TresTristesTigresTristesEnTresTrigales"
+
 dev:
-    data 0x12010
-
-
+    data 0x8000
 ;Fin Datos
 
 ;Programas
@@ -61,10 +75,11 @@ ProgPrincipal:
     ;bsr TestBuscaCar
     ;bsr TestBuscaCarHastaFinal
     ;bsr TestCoincidenCar
-    bsr TestBuscaMax
+    ;bsr TestBuscaMax
+    bsr TestComprime
 
     stop
-    add r1, r1, 1
+    add r1,r1,r1; BORRAR
 
 ;Testers
 TestLongCad:
@@ -106,7 +121,6 @@ TestBuscaCar:
 
 TestBuscaCarHastaFinal: 
     PUSH(r1);Guardamos dirección de retorno 
-    
     LEA (r10, cad2)
     PUSH (r10) 
     bsr LongCad
@@ -132,10 +146,10 @@ TestBuscaCarHastaFinal:
 TestCoincidenCar:
     PUSH(r1)
     
-    LEA(r2, cad2)   
+    LEA(r2, cad1)   
     PUSH(r2); Pasamos cad2
 
-    LEA(r2, cad1)
+    LEA(r2, cad2)
     PUSH(r2); Pasamos cad1
 
     bsr CoincidenCad
@@ -147,22 +161,35 @@ TestBuscaMax:
     PUSH(r1)
 
     LOAD(r2, dev)
-BP1:
     PUSH(r2); Pasamos *dev
 
-    LOAD(r2, max)
+    LOAD(r2, max3)
     PUSH(r2); Pasamos max
 
-    LEA(r2, cad3)
+    LEA(r2, cadBuscaMax3)
     PUSH(r2); Pasamos *cad
 
     bsr BuscaMax
-    addu r30, r30, 12
+    addu r30, r30, 12;Restauramos pila
+
+
 
     POP(r1)
     jmp(r1)
 
+TestComprime:
+    PUSH(r1)
 
+    LOAD(r2, dev)
+    PUSH(r2); Pasamos *dev
+
+    LEA(r2, cadCompresion1)
+    PUSH(r2); Pasamos *cad
+
+    bsr Comprime
+    addu r30, r30, 8
+    POP (r1)
+    jmp(r1)
 ;Fin Testers
 
 ;LongCad (*cadena) -> r29 = Longitud Cadena
@@ -222,6 +249,8 @@ CoincidenCad:
 sig_carCC:
     ld.bu r5, r2, r29; r5 = car cad1
     ld.bu r6, r3, r29; r6 = car cad2
+    cmp r7, r5, r0;
+    bb1 eq, r7, fin_CoincidenCar 
     cmp r7, r5, r6; Comparamos car1 y car2
     bb0 eq, r7,fin_CoincidenCar;Son diferentes
     ;else
@@ -235,89 +264,280 @@ fin_CoincidenCar:
 
 
 
-;rv = BuscaMax( *cad, max, *dev ) -> dev = posicion en ref de la cadena con más coincidentes
+;BuscaMax( *cad, max, *dev ) -> dev = posicion en ref de la cadena con más coincidentes
 BuscaMax: 
 
     PUSH(r1); Guardamos retorno
-    ld r2, r30, 4; r2 = *cad
-    ld.bu r3, r30, 8; r3 = max
+    PUSH(r31); Guarda puntero de pila llamanante
+    or r31, r30, 0;Crea nuevo marco de pila
+    sub r30, r30, 12; Reservamos espacio para 3 variables
+    st r0, r30, 0; index busca = 0
+    st r0, r30, 4; coincidencia max = 0
+    st r0,r30, 8; index coincidencia max = 0
 
-    ld r4, r30, 12; r4 = *dev
-    or r7, r0, r0; r7 = coincidencia max
-    or r8, r0, r0; r8 = index busca
-    ld.bu r9, r2, r3; r9 = primer carecter
 
-sig_iteracion:
+sig_BuscaMax:
 
+    ld r8, r30, 0; r8 = index busca
+    ld r2, r31, 8; r2 = *cad
+    ld r3, r31, 12; r3 = max
+    ld.bu r9, r2, r3; r9 = primer caracter subcadena
     ;Guardamos variables locales
-    PUSH(r7)
 
+    ;BuscaCar (caracter, *cadena, from, to )
     ;BuscaCar (r9, r2, r8, r3)
     PUSH(r3)
     PUSH(r8)
     PUSH(r2)
     PUSH(r9)
+
     bsr BuscaCar
-    POP(r9)
-    POP(r2)
-    POP(r8)
-    POP(r3)
+    addu r30, r30, 16; restauramos pila
 
-    ;Rescatamos variables locales
-    POP(r7)
-
+    ld.bu r3, r31, 12; r3 = max
     ;if(r29 == r3) -> FIN
+
     cmp r25, r29, r3
     bb1 eq, r25, fin_BuscaMax
 
-    or r8, r29, 0;r8 = r29
-
+    ld r8, r30, 0; Cargamos r8 desde pila
     ;if (r8 >= 255) -> FIN
-BP2:
     cmp r25, r8, 255
     bb1 ge, r25, fin_BuscaMax
+    st r29, r30, 0; Guardamos index busca en pila
 
+    ;Cogemos de las respectivas pilas la informacion para construir los parametros
+    ld r8, r30, 0; r8 = index busca
+    ld r2, r31, 8; r2 = *cad
+    ld.bu r3, r31, 12; r3 = max
+
+    ;Construimos parametros
     add r10, r2, r8;*r10 = *r2 + r8 
     add r6, r2, r3; r6 = subcadena fija
 
-    ;Guardamos variables locales
-    PUSH(r7)
-    PUSH(r3)
-    PUSH(r8)
-    PUSH(r2)
-    PUSH(r9)
-
     ;CoincideCad(r6, r10)
     PUSH(r10)
-    PUSH(r6); Es posible que r6 este mal pasado
+    PUSH(r6);
     bsr CoincidenCad
     add r30, r30, 8; Eliminamos argumentos de pila
 
-    ;Recogemos variables locales
-    POP(r9)
-    POP(r2)
-    POP(r8)
-    POP(r3)
-    POP(r7)
-
-    ;if (!(r29 > r7)) -> +4
-BP3:
+    ld r7, r30, 4; r7 = coincidencia max
+    ;if (!(r29 > r7)) -> +salta linea
     cmp r25, r29, r7
-    bb0 gt, r25, +2
-    ;else
-    or r7, r29, 0;r7 = r29
+    bb0 gt, r25, +3
+    st r29, r30, 4; Sustutuinmos el nuevo valor de coincidencia max
+    st r8, r30, 8; index coincidencia max = index busca
+
+    ;Aumentamos index busca
+    ld r8, r30, 0; r8 = index busca
     add r8, r8, 1;r8++
-    br sig_iteracion
+    st r8, r30, 0;index busca = r8
+
+    br sig_BuscaMax
 fin_BuscaMax:
 
-    ld r4, r30, 12; r4 = *dev
-    sub r8, r8, 1;r8 = -1 
+    ld r4, r31, 16; r4 = *dev
+    ld r8, r30, 8; r8 = index max
+    ;sub r8, r8, 1;r8 = -1 
+    cmp r7, r29, 0;
+    bb0 eq, r7, +2
+    subu r8, r8, 1;
     st r8, r4, 0; Guardamos r8 en *dev
+    ld r29, r30, 4; Guardamos coincidencia max en r29
+    or r30, r31, 0
+    POP(r31)
     POP(r1)
-BP4:
-    jmp(r1)
+
+    jmp(r1); 
     
 ;Fin BuscaMax
-Comprime: jmp(r1)
+
+;Comprime( *texto, *salida) -> r29 longitud de *salida (incluyendo cabecera, vector de bits y vector de caracter) 
+Comprime:
+    PUSH(r1);en r31 (4)
+    PUSH(r31);en r31(0)
+    or r31, r30, 0
+
+    ;Reservar Espacio en pila para texto
+    ld r2, r31, 8; r2 = *texto
+    PUSH(r2)
+    bsr LongCad
+    add r30, r30, 4; elimianos los parametros de pila
+    divu r2, r29, 4	;r2 = r29/4
+    mulu r2, r2, 4;
+    cmp r7, r2, r29; r29 es multiplo de 4
+    bb1 eq,r7, 4; salta 4 lineas 
+    subu r2, r29, r2
+    or r3, r0, 4
+    subu r2, r3, r2
+    addu r2, r29, r2
+    sub r30, r30,r2; reservamos espacio en pila para texto
+    
+    ;Reservando Espacio en pila para punteros
+    sub r30, r30, 24; Para cuatro punteros, un contador y una variable global
+    ;Inicializamos punteros a 0
+
+    ld r3, r31, 8; r3 = *texto  
+    st r3, r30, 0; r30(0) = punteroTexto
+    st r5, r30, 4; r30(4) = punteroSalida
+    st r0, r30, 8; r30(8) = punteroMapaBit
+    st r0, r30, 12; r30(12) = punteroPosCadena
+    st r0, r30, 16; r30(16) = contador letras pila
+    st r29, r30, 20; r30(20) = longitud de la cadena inicial
+
+    ;Copiamos los 8 primeros caracteres
+    or r4, r0, 0; en r4 estara el contador
+    or r5, r0, 0; en r5 estara el desplazamiento
+    bucleCopia:
+        cmp r7, r4, 8; Salida del bucle
+        bb1 eq, r7, fin_bucleCopia
+        ld.bu r6, r3 ,r4; r6 = letra a cargar
+        st.b r6, r31, r5; guardamos letra en pila
+        addu r4, r4, 1; contador ++
+        subu r5, r5, 1; desplazamiento pila ++
+        br bucleCopia
+
+    fin_bucleCopia:
+    
+    or r11, r0, 8
+    st r11, r30, 0; r30(0) = punteroTexto = 8
+    sub r11, r0, r11; r11 = -8
+    st r11, r30, 16; r30(16) = contadaor palabras pila = -8
+    or r11, r0, 5
+    st r11, r30, 4; r30(4) = punteroSalida
+    
+
+    bucleTexto:
+        ld.bu r2, r30, 12; punteroPosCadena
+        ld.bu r3, r30, 0; punteroTexto
+        ;¿Hemos terminado?
+        ld r6, r30, 20; r6 = long cad
+        cmp r7, r3, r6
+        bb1 eq, r7, fin_BucleTexto
+        ld r4, r31, 8; *texto
+        PUSH(r2)
+        PUSH(r3)
+        PUSH (r4)
+        bsr BuscaMax
+        addu r30, r30, 12; restauramos pila
+        cmp r7, r29, 3; ¿coincidencia > 4?
+        bb1 gt, r7, hay_Compresion
+        ;No hay compresión
+        ld r3, r31, 8; r3 = *texto
+        ld r4, r30, 0; r4 = punteroTexto
+        ld r5, r30, 16; r5 = contador letras pila
+        ld.bu r6, r3 ,r4; r6 = letra a cargar
+
+        st.b r6, r31, r5; guardamos letra en pila
+        ld r20, r30, 8; r30(8) = punteroMapaBit
+        set r20, r20, 1<5>; solo queremos escribir un bit
+        ld r14, r30, 4; r14 = punteroSalida
+        ld r15, r31, 12; salida
+        ld.bu r16, r15, r14; cogemos byte del mapa
+        P0:
+        clr r16, r16,r20; bit correspondiente a 0
+        st.b r16, r15, r14; dejamos byte modificado por bit
+        addu r20, r20,1; 
+        st r20, r30, 8; puntero MapaBit++
+
+        ld r11, r30, 0; r11 = puntero texto
+        add r11, r11, 1; puntero texto ++
+        st r11, r30, 0; guardamos puntero texto
+
+        ld r5, r30, 16; r5 = contador palabaras pila
+        sub r5, r5, 1; contador palabras pila -- (direciones decrecientes)
+        st r5, r30, 16;
+
+        cmp r7, r20, 39; 40 = 32 + 7
+        bb0 gt, r7, +6
+        or r20, r0, 32; Operaciones de campo de bit
+        st r20, r30, 8; actualizamos puntero mapa de bit
+        ld r15, r30, 4; puntero salida
+        addu r15, r15, 1;siguiente byte del mapa
+        st r15, r30, 4; actualizamos salidas
+
+
+        br bucleTexto
+    hay_Compresion:
+        ld r2, r30, 12;
+        ld r2, r2, r0;
+        ld r5, r30, 16; r5 = contador palabaras pila
+        st.b r2, r31, r5; guardamos letra en pila
+        sub r5, r5, 1; contador palabras pila -- (direciones decrecientes)
+        st.b r29, r31,r5
+        sub r5, r5, 2; contador palabras pila -= 2 (direciones decrecientes)
+        st r5, r30, 16;
+
+        ld r11, r30, 0; r11 = puntero texto
+        add r11, r11, r29; puntero texto += long
+        st r11, r30, 0; guardamos puntero texto
+        
+        ld r20, r30, 8; r30(8) = punteroMapaBit
+        set r20, r20, 1<5>; solo queremos escribir un bit
+        ld r14, r30, 4; r14 = punteroSalida
+        ld r15, r31, 12; salida
+        ld.bu r16, r15, r14; cogemos byte del mapa
+        set r16, r16,r20; bit correspondiente a 0
+        st.b r16, r15, r14; dejamos byte modificado por bit
+        addu r20, r20,1; 
+        st r20, r30, 8; puntero MapaBit++
+        
+        cmp r7, r20, 39; 32 + 7
+        bb0 gt, r7, +5
+        or r20, r0, 32; Operaciones de campo de bit
+        ld r15, r30, 4; puntero salida
+        addu r15, r15, 1;siguiente byte del mapa
+        st r15, r30, 4; actualizamos puntero salida
+
+
+
+        br bucleTexto
+    fin_BucleTexto:
+
+    ;Vamos a copiar la pila en memoria destino
+    ;En r31
+
+    ld r4, r30, 4; en r4 estara el desplazamiento en salida
+    add r4 ,r4,1; desp salida ++
+    st r4, r30, 4; guardamos el desplazamiento
+P1:
+    or r5, r0, 0; en r5 estara el desplazamiento en pila
+    ld r6, r30, 16; contador de pila
+
+    ld r10, r31, 12; *salida
+    bucleCopia2:
+        cmp r7, r5, r6; Salida del bucle
+        bb1 eq, r7, fin_2bucleCopia
+        ld.bu r7, r31 ,r5; r6 = letra a cargar
+        st.b r7, r10, r4; guardamos letra salida
+        addu r4, r4, 1; desp salida ++
+        subu r5, r5, 1; desplazamiento pila ++
+        br bucleCopia2
+
+    fin_2bucleCopia:
+    
+    ;Vamos a contruir la cabecera
+    ld r2, r31, 12; *salida
+    ld r3, r30, 20; r3 = long cadena
+    st.h r3, r2, 0
+    or r3, r0, 0x01
+    st.b r3, r2, 2
+    add r3, r4, 5;
+    ld r3, r30, 4; en r3 estara el desplazamiento en salida
+    st.b r3, r2,3;
+
+
+
+    
+    
+
+
+
+    stop
+fin_Comprime:
+    POP(r31)
+    POP(r1)
+    jmp(r1)
+;Fin Comprime
 Descomprime: jmp(r1)
 Verifica: jmp (r1)

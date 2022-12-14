@@ -1,0 +1,19 @@
+org 5000
+
+
+or r20, r0, r0
+p1:
+;clr r20, r0, 1<0>
+; set r20, r20, 1<5>;
+; set r21, r0,r20;
+; addu r20, r20,1;
+; clr r21, r21,r20;
+; addu r20, r20,1;
+; set r21, r21,r20;
+; addu r20, r20,1;
+
+or r2, r0, 31;
+
+
+stop
+add r1, r1, 1;
