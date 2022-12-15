@@ -64,6 +64,62 @@ comprime(*texto, *salida):
         //falta condicion de salida
     jmp(bucleCopia)       
 
+
+descomprime(*cmdo, *salida)
+    punteros = reservarEspacioEnPila(punteros)
+    long final = read(cmdo)
+    long cabecera = read(cmdo+3)
+    st (long cabecera, puntero[0])
+    punteroByteMapa = read(cmdo, 5)
+    st (punteroByteMapa, puntero[1])
+    st (punteroTexto, puntero[2])
+    st (punteroSalida, puntero[3])
+
+    copy(8 caracteres, salida)
     
+    punteroTexto = long cabecera + 8
+    punteroSalida = 8
+    punteroByteMapa = 0
+    coigoBit = (10000000)
+
+    bucleTexto:
+        if (and(punteroByteMapa, codigoBit) == 0)
+            //no hay compresion
+            
+            copy(comprido[punteroTexto], salida[punteroSalida])
+            punteroTexto++
+            punteroSalida++
+
+            if (codigoBit == 00000001)
+                codigoBit = 10000000
+            else    
+                codigoBit = codigoBit/2
+        else
+            //hay compresion
+
+            posicion = comprido[punteroTexto]
+            posicion += long cabecera
+            longitud = comprimido[punteroTexto+1]
+            contador = 0
+            while (contador < longitud)
+                copy(comprido[posicion], salida[punteroSalida])
+                posicion++
+                punteroSalida++
+                contador++
+            punteroTexto += 3
+
+            if (codigoBit == 00000001)
+                codigoBit = 10000000
+            else    
+                codigoBit = codigoBit/2
+                
+    if (punteroSalida == longFinal)
+        r29 = longFinal
+        br fin_descomprime
+    else
+        br bucleTexto
+
+
+
                 
 

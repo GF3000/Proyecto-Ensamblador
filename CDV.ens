@@ -59,8 +59,12 @@ cadBuscaMax4:
     data "abcdefghijklmnopqrstuvwxyz"; dev =-1
 max4:
     data 4
+cadBuscaMax5: 
+    data " abc abc abc"; dev =1
+max5:
+    data 9
 cadCompresion1:
-    data "TresTristesTigresTristesEnTresTrigales"
+    data "tres tristes tigres comen trigo en un trigal, el primer tigre que..."
 
 dev:
     data 0x8000
@@ -163,10 +167,10 @@ TestBuscaMax:
     LOAD(r2, dev)
     PUSH(r2); Pasamos *dev
 
-    LOAD(r2, max3)
+    LOAD(r2, max5)
     PUSH(r2); Pasamos max
 
-    LEA(r2, cadBuscaMax3)
+    LEA(r2, cadBuscaMax5)
     PUSH(r2); Pasamos *cad
 
     bsr BuscaMax
@@ -415,6 +419,7 @@ Comprime:
         cmp r7, r3, r6
         bb1 eq, r7, fin_BucleTexto
         ld r4, r31, 8; *texto
+
         PUSH(r2)
         PUSH(r3)
         PUSH (r4)
@@ -500,7 +505,6 @@ Comprime:
     ld r4, r30, 4; en r4 estara el desplazamiento en salida
     add r4 ,r4,1; desp salida ++
     st r4, r30, 4; guardamos el desplazamiento
-P1:
     or r5, r0, 0; en r5 estara el desplazamiento en pila
     ld r6, r30, 16; contador de pila
 
@@ -525,14 +529,6 @@ P1:
     add r3, r4, 5;
     ld r3, r30, 4; en r3 estara el desplazamiento en salida
     st.b r3, r2,3;
-
-
-
-    
-    
-
-
-
     stop
 fin_Comprime:
     POP(r31)
