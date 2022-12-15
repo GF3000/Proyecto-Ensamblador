@@ -69,6 +69,13 @@ cadCompresion1:
     data "tres tristes tigres comen trigo en un trigal, el primer tigre que...\0"
 cadCompresion2:
     data "0123456789\0"
+cadComprimida1:
+    data 0x0b010044, 0x10102400, 0x74004000, 0x20736572
+    data 0x73697274, 0x04000274, 0x00016769, 0x6d6f6304
+    data 0x00046e65, 0x206f6704, 0x75206e65, 0x61060018
+    data 0x65202c6c, 0x7270206c, 0x72656d69, 0x2006000c
+    data 0x2e657571, 0x00002e2e
+
 
 dev:
     data 0x8000
@@ -84,7 +91,8 @@ ProgPrincipal:
     ;bsr TestBuscaCarHastaFinal
     ;bsr TestCoincidenCar
     ;bsr TestBuscaMax
-    bsr TestComprime
+    ;bsr TestComprime
+    bsr TestDescomprime
 
     stop
     add r1,r1,r1; BORRAR
@@ -191,12 +199,27 @@ TestComprime:
     LOAD(r2, dev)
     PUSH(r2); Pasamos *dev
 
-    LEA(r2, cadCompresion1)
+    LEA(r2, cadCompresion2)
     PUSH(r2); Pasamos *cad
 
     bsr Comprime
     addu r30, r30, 8
+
     POP (r1)
+    jmp(r1)
+TestDescomprime:
+    PUSH(r1)
+
+    LOAD(r2, dev)
+    PUSH(r2)
+
+    LEA(r2, cadComprimida1)
+    PUSH(r2)
+
+    bsr Descomprime
+    addu r30, r30, 8
+
+    POP(r1)
     jmp(r1)
 ;Fin Testers
 
@@ -535,8 +558,8 @@ Comprime:
     add r3, r4, 5;
     ld r3, r30, 4; en r3 estara el desplazamiento en salida
     st.b r3, r2,3;
-    stop
 fin_Comprime:
+    or r29, r4, 0;el desplazamiento respecto a la salida es la longitud comprimida
     or r30, r31, 0
     POP(r31)
     POP(r1)
