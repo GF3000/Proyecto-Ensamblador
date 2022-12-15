@@ -700,6 +700,8 @@ Descomprime:
     
 
 fin_Descomprime:
+    ld r8, r31, 12; cargamos *salida
+    st.b r0, r8, r3	;Añadimos \0 al final
     or r29, r4, r0; r29 = long final
     or r30, r31, 0
     POP(r31)
