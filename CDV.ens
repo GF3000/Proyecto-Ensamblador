@@ -199,7 +199,7 @@ TestComprime:
     LOAD(r2, dev)
     PUSH(r2); Pasamos *dev
 
-    LEA(r2, cadCompresion2)
+    LEA(r2, cadComprimida1)
     PUSH(r2); Pasamos *cad
 
     bsr Comprime
@@ -419,16 +419,16 @@ Comprime:
     ;Copiamos los 8 primeros caracteres
     or r4, r0, 0; en r4 estara el contador
     or r5, r0, 0; en r5 estara el desplazamiento
-    bucleCopia:
+    buc1CopiaComp:
         cmp r7, r4, 8; Salida del bucle
-        bb1 eq, r7, fin_bucleCopia
+        bb1 eq, r7, fin_buc1CopiaComp
         ld.bu r6, r3 ,r4; r6 = letra a cargar
         st.b r6, r31, r5; guardamos letra en pila
         addu r4, r4, 1; contador ++
         subu r5, r5, 1; desplazamiento pila ++
-        br bucleCopia
+        br buc1CopiaComp
 
-    fin_bucleCopia:
+    fin_buc1CopiaComp:
     
     or r11, r0, 8
     st r11, r30, 0; r30(0) = punteroTexto = 8
@@ -441,14 +441,14 @@ Comprime:
     st r11, r30, 8; puntero mapaBit
     
 
-    bucleTexto:
+    bucTextoComp:
 
         or r2, r0, 100; *dev = 100
         ld.bu r3, r30, 0; punteroTexto
         ;¿Hemos terminado?
         ld r6, r30, 20; r6 = long cad
         cmp r7, r3, r6
-        bb1 eq, r7, fin_BucleTexto
+        bb1 eq, r7, fin_bucTextoComp
         ld r4, r31, 8; *texto
 
         PUSH(r2)
@@ -491,7 +491,7 @@ Comprime:
         st r15, r30, 4; actualizamos salidas
 
 
-        br bucleTexto
+        br bucTextoComp
     hay_Compresion:
         ld r2, r30, 12;
         ld r2, r2, r0;
@@ -525,8 +525,8 @@ Comprime:
 
 
 
-        br bucleTexto
-    fin_BucleTexto:
+        br bucTextoComp
+    fin_bucTextoComp:
 
     ;Vamos a copiar la pila en memoria destino
     ;En r31
@@ -538,16 +538,16 @@ Comprime:
     ld r6, r30, 16; contador de pila
 
     ld r10, r31, 12; *salida
-    bucleCopia2:
+    buc2CopiaComp:
         cmp r7, r5, r6; Salida del bucle
-        bb1 eq, r7, fin_2bucleCopia
+        bb1 eq, r7, fin_buc2CopiaComp
         ld.bu r7, r31 ,r5; r6 = letra a cargar
         st.b r7, r10, r4; guardamos letra salida
         addu r4, r4, 1; desp salida ++
         subu r5, r5, 1; desplazamiento pila ++
-        br bucleCopia2
+        br buc2CopiaComp
 
-    fin_2bucleCopia:
+    fin_buc2CopiaComp:
     
     ;Vamos a contruir la cabecera
     ld r2, r31, 12; *salida
@@ -566,15 +566,144 @@ fin_Comprime:
     jmp(r1)
 ;Fin Comprime
 
-;Comprime
+;Descomprime
 Descomprime:
     PUSH(r1);en r31 (4)
     PUSH(r31);en r31(0)
     or r31, r30, 0
     sub r30, r30, 16; Para cuatro punteros
 
+    ld r2, r31,8; texto
+    ld.b r3, r2, 3; 4ato byte de texto (long cabecera)
+    st.b r3, r30, 0; guardamos longCabecera en punteros[0]
+    st r3, r30, 8; punteroTexto = longCabecera en punteros[8] 
+    or r3, r0, 5; puntero Bytemapa
+    st.b r3, r30, 4; guardamos longCabecera en punteros[4]
+    st r0, r30, 12; punteroSalida en punteros[12]
+
+    ;Vamos a copiar los 8 primeros caracteres
+
+    buc1CopiaDes:
+
+        ld r5, r30, 8; cargamos punteroTexto
+        ld r6, r31, 8; cargamos *texto
+        ld.b r7, r6, r5; cargamos caracter
+        ld r8, r31, 12; cargamos *salida
+        ld r3, r30, 12; r3 = puntero salida = punteros [12]
+        st.b r7, r8, r3; dejamos el caracter en salida
+        
+        add r3, r3, 1; puntero salida ++
+        st r3, r30, 12
+
+        add r5, r5, 1; punteroTexto ++
+        st r5, r30, 8
+        cmp r7, r3, 8
+        bb1 eq, r7, fin_buc1CopiaDes; if (llevamos 8 caracteres) -> termina este bucle
+
+
+        br buc1CopiaDes
+
+    fin_buc1CopiaDes:
+
+    or r11, r0, 128;   128 = 10000000
+    or r12, r0, 1; 1 = 00000001 indicador de que hay que pasar byte
+    
+    bucTextoDes:
+        ld r2, r30, 4; r2 = puntero ByteMapa
+        ld r6, r31, 8; cargamos *texto
+        ld.b r3, r6, r2; r3 = Byte mapaBit
+        and r5, r11,r3;
+        cmp r7, r5, 0;  if (and(punteroByteMapa, codigoBit) == 0)
+        bb0 eq, r7, hay_Descompresion
+        ;No hay Descompresion
+
+        ld r5, r30, 8; cargamos punteroTexto
+        ld r6, r31, 8; cargamos *texto
+        ld.b r7, r6, r5; cargamos caracter
+        P0:
+        ld r8, r31, 12; cargamos *salida
+        ld r3, r30, 12; r3 = puntero salida = punteros [12]
+        st.b r7, r8, r3; dejamos el caracter en salida
+
+        add r3, r3, 1; puntero salida ++
+        st r3, r30, 12
+
+        add r5, r5, 1; punteroTexto ++
+        st r5, r30, 8
+
+    
+        P1:
+        cmp r7, r11, r12
+        bb1 eq, r7, ReiniciarBits
+        divu r11, r11, 2; codigoBit = codigoBit/2
+        br fin_hay_Descompresion
+        ReiniciarBits:
+        ;reiniciamos r11
+        or r11, r0, 128; 128 = 10000000
+        addu r2, r2, 1;puntero ByteMapa++
+        st r2, r30, 4 
+
+        br fin_hay_Descompresion
+
+
+
+    
+    hay_Descompresion:
+
+        ld r5, r30, 8; cargamos punteroTexto
+        ld r6, r31, 8; cargamos *texto
+        ld r8, r31, 12; cargamos *salida
+        ld.b r2, r6, r5; r2 =posicion comp
+        ld r3, r30, 0; r3 = long cabecera
+        ;addu r2, r2, r3;poscion += long cabecera
+        addu r5, r5, 2;
+        ld.b r3, r6, r5; r3 = longitud copia
+        or r4, r0, r0; r4 = contador = 0
+        ld r9, r30, 12; r9 = puntero salida = punteros [12]
+
+        bucDecompresion:
+        ld r20, r31, 12
+        ld.b r7, r20, r2; cargamos caracter
+        st.b r7, r8, r9; guardamos caracter
+        add r9, r9, 1; puntero salida++
+        addu r2, r2, 1;  posicion comp++
+        addu r4, r4, 1; contador ++
+        cmp r7, r4, r3;
+        bb1 eq, r7, fin_bucDecompresion
+        br bucDecompresion
+
+
+
+        
+        fin_bucDecompresion:
+        st r9, r30, 12;
+        ld r5, r30, 8; cargamos punteroTexto
+        addu r5, r5, 3
+        st r5, r30, 8
+
+        cmp r7, r11, r12
+        bb1 eq, r7, ReiniciarBits
+        divu r11, r11, 2; codigoBit = codigoBit/2
+        br fin_hay_Descompresion
+        
+        
+    fin_hay_Descompresion:
+    ld r3, r30, 12; r3 = puntero salida = punteros [12]
+    ld r8, r31, 8; cargamos *texto
+    ld.b r4, r8,0;longfinal
+    cmp r7, r3, r4
+    bb1 eq, r7, fin_Descomprime	;if (punteroSalida == longFinal)
+    br bucTextoDes
+    
+
+
     
 
 fin_Descomprime:
-jmp(r1)
+    or r29, r4, r0; r29 = long final
+    or r30, r31, 0
+    POP(r31)
+    POP(r1)
+    jmp(r1)
+;finDescomprime
 Verifica: jmp (r1)

@@ -99,7 +99,7 @@ descomprime(*cmdo, *salida)
 
             posicion = comprido[punteroTexto]
             posicion += long cabecera
-            longitud = comprimido[punteroTexto+1]
+            longitud = comprimido[punteroTexto+2]
             contador = 0
             while (contador < longitud)
                 copy(comprido[posicion], salida[punteroSalida])
@@ -110,9 +110,10 @@ descomprime(*cmdo, *salida)
 
             if (codigoBit == 00000001)
                 codigoBit = 10000000
+                punteroByteMapa++
             else    
                 codigoBit = codigoBit/2
-                
+
     if (punteroSalida == longFinal)
         r29 = longFinal
         br fin_descomprime
