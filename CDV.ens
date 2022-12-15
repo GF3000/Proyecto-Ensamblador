@@ -66,7 +66,7 @@ max5:
 max6:
     data 26
 cadCompresion1:
-    data "tres tristes tigres comen trigo en un trigal, el primer tigre que..."
+    data "tres tristes tigres comen trigo en un trigal, el primer tigre que...\0"
 cadCompresion2:
     data "0123456789\0"
 
@@ -83,8 +83,8 @@ ProgPrincipal:
     ;bsr TestBuscaCar
     ;bsr TestBuscaCarHastaFinal
     ;bsr TestCoincidenCar
-    bsr TestBuscaMax
-    ;bsr TestComprime
+    ;bsr TestBuscaMax
+    bsr TestComprime
 
     stop
     add r1,r1,r1; BORRAR
@@ -427,7 +427,7 @@ Comprime:
         cmp r7, r3, r6
         bb1 eq, r7, fin_BucleTexto
         ld r4, r31, 8; *texto
-P1:
+
         PUSH(r2)
         PUSH(r3)
         PUSH (r4)
@@ -446,7 +446,6 @@ P1:
         ld r14, r30, 4; r14 = punteroSalida
         ld r15, r31, 12; salida
         ld.bu r16, r15, r14; cogemos byte del mapa
-        P0:
         clr r16, r16,r20; bit correspondiente a 0
         st.b r16, r15, r14; dejamos byte modificado por bit
         subu r20, r20,1; 
@@ -538,9 +537,21 @@ P1:
     st.b r3, r2,3;
     stop
 fin_Comprime:
+    or r30, r31, 0
     POP(r31)
     POP(r1)
     jmp(r1)
 ;Fin Comprime
-Descomprime: jmp(r1)
+
+;Comprime
+Descomprime:
+    PUSH(r1);en r31 (4)
+    PUSH(r31);en r31(0)
+    or r31, r30, 0
+    sub r30, r30, 16; Para cuatro punteros
+
+    
+
+fin_Descomprime:
+jmp(r1)
 Verifica: jmp (r1)
