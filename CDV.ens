@@ -30,7 +30,7 @@ POP: MACRO (ra)
 ;Fin Macros
 
 ;Datos
-org 100
+org 500
 C1:
     data "_"; pos in cad1 = 0x12 pos cad2 = 0xd
 cad1:
@@ -63,8 +63,12 @@ cadBuscaMax5:
     data " abc abc abc"; dev =1
 max5:
     data 9
+max6:
+    data 26
 cadCompresion1:
     data "tres tristes tigres comen trigo en un trigal, el primer tigre que..."
+cadCompresion2:
+    data "0123456789\0"
 
 dev:
     data 0x8000
@@ -79,8 +83,8 @@ ProgPrincipal:
     ;bsr TestBuscaCar
     ;bsr TestBuscaCarHastaFinal
     ;bsr TestCoincidenCar
-    ;bsr TestBuscaMax
-    bsr TestComprime
+    bsr TestBuscaMax
+    ;bsr TestComprime
 
     stop
     add r1,r1,r1; BORRAR
@@ -167,10 +171,10 @@ TestBuscaMax:
     LOAD(r2, dev)
     PUSH(r2); Pasamos *dev
 
-    LOAD(r2, max5)
+    LOAD(r2, max6)
     PUSH(r2); Pasamos max
 
-    LEA(r2, cadBuscaMax5)
+    LEA(r2, cadCompresion1)
     PUSH(r2); Pasamos *cad
 
     bsr BuscaMax
@@ -409,17 +413,21 @@ Comprime:
     st r11, r30, 16; r30(16) = contadaor palabras pila = -8
     or r11, r0, 5
     st r11, r30, 4; r30(4) = punteroSalida
+
+    or r11, r0, 39; Incializamos contador de bit
+    st r11, r30, 8; puntero mapaBit
     
 
     bucleTexto:
-        ld.bu r2, r30, 12; punteroPosCadena
+
+        or r2, r0, 100; *dev = 100
         ld.bu r3, r30, 0; punteroTexto
         ;¿Hemos terminado?
         ld r6, r30, 20; r6 = long cad
         cmp r7, r3, r6
         bb1 eq, r7, fin_BucleTexto
         ld r4, r31, 8; *texto
-
+P1:
         PUSH(r2)
         PUSH(r3)
         PUSH (r4)
@@ -435,15 +443,14 @@ Comprime:
 
         st.b r6, r31, r5; guardamos letra en pila
         ld r20, r30, 8; r30(8) = punteroMapaBit
-        set r20, r20, 1<5>; solo queremos escribir un bit
         ld r14, r30, 4; r14 = punteroSalida
         ld r15, r31, 12; salida
         ld.bu r16, r15, r14; cogemos byte del mapa
         P0:
         clr r16, r16,r20; bit correspondiente a 0
         st.b r16, r15, r14; dejamos byte modificado por bit
-        addu r20, r20,1; 
-        st r20, r30, 8; puntero MapaBit++
+        subu r20, r20,1; 
+        st r20, r30, 8; puntero MapaBit--
 
         ld r11, r30, 0; r11 = puntero texto
         add r11, r11, 1; puntero texto ++
@@ -453,9 +460,9 @@ Comprime:
         sub r5, r5, 1; contador palabras pila -- (direciones decrecientes)
         st r5, r30, 16;
 
-        cmp r7, r20, 39; 40 = 32 + 7
-        bb0 gt, r7, +6
-        or r20, r0, 32; Operaciones de campo de bit
+        cmp r7, r20, 31; 40 = 32 + 7
+        bb0 eq, r7, +6
+        or r20, r0, 39; Operaciones de campo de bit
         st r20, r30, 8; actualizamos puntero mapa de bit
         ld r15, r30, 4; puntero salida
         addu r15, r15, 1;siguiente byte del mapa
@@ -468,9 +475,9 @@ Comprime:
         ld r2, r2, r0;
         ld r5, r30, 16; r5 = contador palabaras pila
         st.b r2, r31, r5; guardamos letra en pila
-        sub r5, r5, 1; contador palabras pila -- (direciones decrecientes)
+        sub r5, r5, 2; contador palabras pila -- (direciones decrecientes)
         st.b r29, r31,r5
-        sub r5, r5, 2; contador palabras pila -= 2 (direciones decrecientes)
+        sub r5, r5, 1; contador palabras pila -= 2 (direciones decrecientes)
         st r5, r30, 16;
 
         ld r11, r30, 0; r11 = puntero texto
@@ -484,12 +491,12 @@ Comprime:
         ld.bu r16, r15, r14; cogemos byte del mapa
         set r16, r16,r20; bit correspondiente a 0
         st.b r16, r15, r14; dejamos byte modificado por bit
-        addu r20, r20,1; 
+        subu r20, r20,1; 
         st r20, r30, 8; puntero MapaBit++
         
-        cmp r7, r20, 39; 32 + 7
-        bb0 gt, r7, +5
-        or r20, r0, 32; Operaciones de campo de bit
+        cmp r7, r20, 31; 32 + 7
+        bb0 eq, r7, +5
+        or r20, r0, 39; Operaciones de campo de bit
         ld r15, r30, 4; puntero salida
         addu r15, r15, 1;siguiente byte del mapa
         st r15, r30, 4; actualizamos puntero salida
