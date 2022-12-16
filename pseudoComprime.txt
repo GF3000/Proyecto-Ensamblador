@@ -121,6 +121,29 @@ descomprime(*cmdo, *salida)
         br bucleTexto
 
 
+Verifica (*texto, *long1, *long2) -> r29 = {0 si bien verificado, -1 si longitudes diferentes, -2 si contenido diferente}
+    long = longCad(*texto)
+    tamComp = Redondeo_a_4(5 + long/8 + long )
+    tamDecomp = Redondeo_a_4(longcad)
+    reservarEspacioEnPila (tamComp)
+    reservarEspacioEnPila (tamDecomp)
+    reservarEspacioEnPila(1 variable)
+    puntero[0] = long
+    puntero[4] = -tampComp
 
+    Comprime(*texto, r31-tamComp)
+    Descomprime(r31 - tampComp, r30+ 8)
+
+    if (puntero[0] != r29)
+        return -1
+
+    CoincideCad(*texto, r30+8)
+
+    if (r29 != puntero[0])
+        return -2
+    else
+        return 0
+
+   
                 
 

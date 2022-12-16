@@ -4,9 +4,26 @@
 org 5000
 
 
-or r11, r0, 128; 128 = 10000000
-divu r11, r11, 2
-and r2, r11, 64
+;or r11, r29, r0; r11 = longCad = r29
+or r11, r0, 0x44
+divu r10, r11, 8; total = longCad/8
+addu r10, r10, 5; total += longCad
+addu r10, r10, r11; total += longCad
+
+;r10 = parámetro a redondear
+divu r12, r10, 4;
+mulu r12, r12, 4;
+cmp r7, r12, r10; multilo de 4 por abajo == total 
+bb1 eq,r7, 4; salta 4 lineas 
+;No es multpilo
+subu r7, r10, r12
+or r3, r0, 4
+subu r7, r3, r7
+addu r10, r10, r7
+;r10 = parámetro redondeado
+
+
+
 
 
 stop

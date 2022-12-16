@@ -1,5 +1,5 @@
 ;Autor: Guillermo Franco Gimeno
-;Fecha: 9/11/2022
+;Fecha Inicio: 9/11/2022
 
 ;Macros
 LEA: MACRO (reg,ETIQ)
@@ -79,6 +79,8 @@ cadComprimida1:
 
 dev:
     data 0x8000
+dev2:
+    data 0x8004
 ;Fin Datos
 
 ;Programas
@@ -92,7 +94,8 @@ ProgPrincipal:
     ;bsr TestCoincidenCar
     ;bsr TestBuscaMax
     ;bsr TestComprime
-    bsr TestDescomprime
+    ;bsr TestDescomprime
+    bsr TestVerifica
 
     stop
     add r1,r1,r1; BORRAR
@@ -199,7 +202,7 @@ TestComprime:
     LOAD(r2, dev)
     PUSH(r2); Pasamos *dev
 
-    LEA(r2, cadComprimida1)
+    LEA(r2, cadCompresion1)
     PUSH(r2); Pasamos *cad
 
     bsr Comprime
@@ -221,6 +224,24 @@ TestDescomprime:
 
     POP(r1)
     jmp(r1)
+TestVerifica:
+    PUSH(r1)
+
+    LOAD(r2, dev2)
+    PUSH(r2)
+
+    LOAD(r2, dev)
+    PUSH(r2)
+
+    LEA(r2, cadCompresion1)
+    PUSH(r2)
+
+    bsr Verifica
+    addu r30, r30, 12
+
+    POP(r1)
+    jmp(r1)
+
 ;Fin Testers
 
 ;LongCad (*cadena) -> r29 = Longitud Cadena
@@ -397,7 +418,7 @@ Comprime:
     divu r2, r29, 4	;r2 = r29/4
     mulu r2, r2, 4;
     cmp r7, r2, r29; r29 es multiplo de 4
-    bb1 eq,r7, 4; salta 4 lineas 
+    bb1 eq,r7, 5; salta 4 lineas 
     subu r2, r29, r2
     or r3, r0, 4
     subu r2, r3, r2
@@ -418,13 +439,13 @@ Comprime:
 
     ;Copiamos los 8 primeros caracteres
     or r4, r0, 0; en r4 estara el contador
-    or r5, r0, 0; en r5 estara el desplazamiento
+    sub r5, r0, 1; en r5 estara el desplazamiento = -1
     buc1CopiaComp:
         cmp r7, r4, 8; Salida del bucle
         bb1 eq, r7, fin_buc1CopiaComp
         ld.bu r6, r3 ,r4; r6 = letra a cargar
         st.b r6, r31, r5; guardamos letra en pila
-        addu r4, r4, 1; contador ++
+        add r4, r4, 1; contador 
         subu r5, r5, 1; desplazamiento pila ++
         br buc1CopiaComp
 
@@ -433,6 +454,8 @@ Comprime:
     or r11, r0, 8
     st r11, r30, 0; r30(0) = punteroTexto = 8
     sub r11, r0, r11; r11 = -8
+    sub r11, r11,1 ; r11 -- 
+
     st r11, r30, 16; r30(16) = contadaor palabras pila = -8
     or r11, r0, 5
     st r11, r30, 4; r30(4) = punteroSalida
@@ -459,6 +482,7 @@ Comprime:
         cmp r7, r29, 3; ¿coincidencia > 4?
         bb1 gt, r7, hay_Compresion
         ;No hay compresión
+    no_hayCompresion:
         ld r3, r31, 8; r3 = *texto
         ld r4, r30, 0; r4 = punteroTexto
         ld r5, r30, 16; r5 = contador letras pila
@@ -469,6 +493,8 @@ Comprime:
         ld r14, r30, 4; r14 = punteroSalida
         ld r15, r31, 12; salida
         ld.bu r16, r15, r14; cogemos byte del mapa
+
+
         clr r16, r16,r20; bit correspondiente a 0
         st.b r16, r15, r14; dejamos byte modificado por bit
         subu r20, r20,1; 
@@ -493,13 +519,13 @@ Comprime:
 
         br bucTextoComp
     hay_Compresion:
-        ld r2, r30, 12;
+        or r2, r0, 100;
         ld r2, r2, r0;
         ld r5, r30, 16; r5 = contador palabaras pila
-        st.b r2, r31, r5; guardamos letra en pila
-        sub r5, r5, 2; contador palabras pila -- (direciones decrecientes)
+        st.b r2, r31, r5; guardamos inicio de copia en pila
+        sub r5, r5, 2; contador palabras pila -=2 (direciones decrecientes)
         st.b r29, r31,r5
-        sub r5, r5, 1; contador palabras pila -= 2 (direciones decrecientes)
+        sub r5, r5, 1; contador palabras pila --(direciones decrecientes)
         st r5, r30, 16;
 
         ld r11, r30, 0; r11 = puntero texto
@@ -507,22 +533,24 @@ Comprime:
         st r11, r30, 0; guardamos puntero texto
         
         ld r20, r30, 8; r30(8) = punteroMapaBit
-        set r20, r20, 1<5>; solo queremos escribir un bit
         ld r14, r30, 4; r14 = punteroSalida
         ld r15, r31, 12; salida
         ld.bu r16, r15, r14; cogemos byte del mapa
-        set r16, r16,r20; bit correspondiente a 0
+
+        set r16, r16,r20; bit correspondiente a 1
         st.b r16, r15, r14; dejamos byte modificado por bit
         subu r20, r20,1; 
-        st r20, r30, 8; puntero MapaBit++
+        st r20, r30, 8; puntero MapaBit--
         
         cmp r7, r20, 31; 32 + 7
-        bb0 eq, r7, +5
+        bb0 eq, r7, +6
         or r20, r0, 39; Operaciones de campo de bit
+        st r20, r30, 8
         ld r15, r30, 4; puntero salida
         addu r15, r15, 1;siguiente byte del mapa
         st r15, r30, 4; actualizamos puntero salida
 
+ 
 
 
         br bucTextoComp
@@ -534,7 +562,8 @@ Comprime:
     ld r4, r30, 4; en r4 estara el desplazamiento en salida
     add r4 ,r4,1; desp salida ++
     st r4, r30, 4; guardamos el desplazamiento
-    or r5, r0, 0; en r5 estara el desplazamiento en pila
+    or r5, r0, r0;
+    sub r5, r0, 1; en r5 estara el desplazamiento en pila
     ld r6, r30, 16; contador de pila
 
     ld r10, r31, 12; *salida
@@ -544,7 +573,7 @@ Comprime:
         ld.bu r7, r31 ,r5; r6 = letra a cargar
         st.b r7, r10, r4; guardamos letra salida
         addu r4, r4, 1; desp salida ++
-        subu r5, r5, 1; desplazamiento pila ++
+        subu r5, r5, 1; desplazamiento pila -- (direcciones decrecientes)
         br buc2CopiaComp
 
     fin_buc2CopiaComp:
@@ -555,7 +584,6 @@ Comprime:
     st.h r3, r2, 0
     or r3, r0, 0x01
     st.b r3, r2, 2
-    add r3, r4, 5;
     ld r3, r30, 4; en r3 estara el desplazamiento en salida
     st.b r3, r2,3;
 fin_Comprime:
@@ -575,10 +603,11 @@ Descomprime:
 
     ld r2, r31,8; texto
     ld.b r3, r2, 3; 4ato byte de texto (long cabecera)
+    ;add r3, r3, 1;
     st.b r3, r30, 0; guardamos longCabecera en punteros[0]
     st r3, r30, 8; punteroTexto = longCabecera en punteros[8] 
     or r3, r0, 5; puntero Bytemapa
-    st.b r3, r30, 4; guardamos longCabecera en punteros[4]
+    st r3, r30, 4; guardamos longCabecera en punteros[4]
     st r0, r30, 12; punteroSalida en punteros[12]
 
     ;Vamos a copiar los 8 primeros caracteres
@@ -612,15 +641,14 @@ Descomprime:
         ld r2, r30, 4; r2 = puntero ByteMapa
         ld r6, r31, 8; cargamos *texto
         ld.b r3, r6, r2; r3 = Byte mapaBit
+
         and r5, r11,r3;
         cmp r7, r5, 0;  if (and(punteroByteMapa, codigoBit) == 0)
         bb0 eq, r7, hay_Descompresion
         ;No hay Descompresion
-
         ld r5, r30, 8; cargamos punteroTexto
         ld r6, r31, 8; cargamos *texto
         ld.b r7, r6, r5; cargamos caracter
-        P0:
         ld r8, r31, 12; cargamos *salida
         ld r3, r30, 12; r3 = puntero salida = punteros [12]
         st.b r7, r8, r3; dejamos el caracter en salida
@@ -631,8 +659,6 @@ Descomprime:
         add r5, r5, 1; punteroTexto ++
         st r5, r30, 8
 
-    
-        P1:
         cmp r7, r11, r12
         bb1 eq, r7, ReiniciarBits
         divu r11, r11, 2; codigoBit = codigoBit/2
@@ -646,7 +672,6 @@ Descomprime:
         br fin_hay_Descompresion
 
 
-
     
     hay_Descompresion:
 
@@ -654,7 +679,7 @@ Descomprime:
         ld r6, r31, 8; cargamos *texto
         ld r8, r31, 12; cargamos *salida
         ld.b r2, r6, r5; r2 =posicion comp
-        ld r3, r30, 0; r3 = long cabecera
+        ld.b r3, r30, 0; r3 = long cabecera
         ;addu r2, r2, r3;poscion += long cabecera
         addu r5, r5, 2;
         ld.b r3, r6, r5; r3 = longitud copia
@@ -662,7 +687,7 @@ Descomprime:
         ld r9, r30, 12; r9 = puntero salida = punteros [12]
 
         bucDecompresion:
-        ld r20, r31, 12
+        ld r20, r31, 12; *salida
         ld.b r7, r20, r2; cargamos caracter
         st.b r7, r8, r9; guardamos caracter
         add r9, r9, 1; puntero salida++
@@ -708,4 +733,126 @@ fin_Descomprime:
     POP(r1)
     jmp(r1)
 ;finDescomprime
-Verifica: jmp (r1)
+
+;Verifica (*texto, *long1, *long2)
+Verifica: 
+    PUSH(r1);en r31 (4)
+    PUSH(r31);en r31(0)
+    or r31, r30, 0
+
+    ld r2, r31, 8; r2 = *texto
+    
+    PUSH(r2)
+    bsr LongCad
+    addu r30, r30, 4
+
+    P0:
+    ld r2, r31, 12; r2 = *long1
+    st r29, r2, r0
+
+    ;r29 = long
+
+    
+    ;tamComp = Redondeo_a_4(5 + long/8 + long )
+        or r11, r29, r0; r11 = longCad = r29
+        divu r10, r11, 8; total = longCad/8
+        addu r10, r10, 5; total += longCad
+        addu r10, r10, r11; total += longCad
+
+        ;r10 = parámetro a redondear
+        divu r12, r10, 4;
+        mulu r12, r12, 4;
+        cmp r7, r12, r10; multilo de 4 por abajo == total 
+        bb1 eq,r7, 5; salta 4 lineas 
+        ;No es multpilo
+        subu r7, r10, r12
+        or r3, r0, 4
+        subu r7, r3, r7
+        addu r10, r10, r7
+        ;r10 = parámetro redondeado
+    ;reservarEspacioEnPila (tamComp)
+
+    or r5, r10, r0; r5 = tampComp
+    sub r30, r30, r10
+
+    ;tamDecomp = Redondeo_a_4(longcad)
+        or r10, r29, 0
+        ;r10 = parámetro a redondear
+        divu r12, r10, 4;
+        mulu r12, r12, 4;
+        cmp r7, r12, r10; multilo de 4 por abajo == total 
+        bb1 eq,r7, 5; salta 4 lineas 
+        ;No es multpilo
+        subu r7, r10, r12
+        or r3, r0, 4
+        subu r7, r3, r7
+        addu r10, r10, r7
+        ;r10 = parámetro redondeado
+    ;reservarEspacioEnPila (tamDecomp)
+
+    sub r30, r30, r10
+
+    ;reservarEspacioEnPila(2 variable)
+    sub r30, r30, 8
+    st r29, r30, 0; puntero[0] = long
+    ; r5 = stampComp
+    st r5, r30, 4; puntero[4] = +tampComp
+
+
+    sub r2,r31, r5; r2 = r31-tamComp
+    PUSH(r2) 
+    ld r2, r31, 8; r2 = *texto
+    PUSH(r2)
+    
+    ld r5, r30, 12;Borrar
+    
+    bsr Comprime
+    addu r30, r30, 8
+
+    add r2, r30, 8
+    ld r5, r30, 4
+    PUSH(r2); r30 +8
+    sub r2,r31, r5; r2 = r31-tamComp
+    PUSH(r2) 
+    bsr Descomprime
+    add r30, r30, 8
+    
+    ld r10, r30, 0; cargamos long
+    cmp r7, r29, r10; 
+    bb0 eq, r7, difLong
+
+    ;CoincideCad(*texto, r30+8)
+    add r2, r30, 8; r30+8
+    PUSH(r2)
+    ld r2, r31, 8; r2 = *texto
+    PUSH(r2)
+
+    bsr CoincidenCad
+    add r30, r30, 8
+
+    ld r2, r31, 16; r2 = *long2
+    st r29, r2, r0
+
+
+    ld r10, r30, 0; cargamos long
+    cmp r7, r29, r10; 
+    bb0 eq, r7, difContenido
+    or r29, r0, r0; r29 = 0
+    br fin_Verifica
+
+
+
+    difContenido:
+    sub r29, r0, 1; r29 = -2
+    br fin_Verifica
+
+    difLong:
+    sub r29, r0, 1; r29 = -1
+    br fin_Verifica
+fin_Verifica:
+
+
+    or r30, r31, r0;
+    POP(r31)
+    POP(r1)
+    jmp (r1)
